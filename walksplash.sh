@@ -23,14 +23,16 @@ usage() {
 
 Options:
 	* wallpaper type:
-		-r,--random
-		-a,--daily
-		-e,--weekly
-		-f,--featured
+		-r, random
+		-d, daily
+		-w, weekly
+		-f, featured
 		-q,--search	 Get a photo from a search query
 	* colorscheme options:
 		-c,--colors	 Set colorscheme with wal
-
+		-o, specify output file name
+		-v, show version
+		-h/-?, show this help message
 Example:
 	wallsplash --featured -cs"
 }
@@ -42,84 +44,47 @@ version() {
 
 DIR="${HOME}/Pictures/Autowallpaper"
 
+'''
 getopt --test > /dev/null
 if [[ $? -ne 4 ]]; then
 	echo "I’m sorry, `getopt --test` failed in this environment."
 	exit 1
 fi
-
-OPTIONS=:raefcsvhq:
-LONGOPTIONS=random,daily,weekly,featured,colors,symlink,version,help,search:
-
-PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTIONS --name "$0" -- "$@")
-if [[ $? -ne 0 ]]; then
-	exit 2
-fi
-eval set -- "$PARSED"
-
 '''
-while getopts "rd:wfcqvh?" opt; do
+
+while getopts "rdfo:cqvh?" opt; do
 	case "$opt" in
 	h|\?)
 		usage
 		exit 0
 		;;
-	r)  OPT="-r"
+	r)
+		OPT="-r"
+		TYPE="random"
 		;;
-	f)  OPT="-f" #output_file=$OPTARG
+	f)
+		OPT="-f"
+		TYPE="featured"
 		;;
-	d)	TIME="-d"
+	d)
+		#TIME=${OPTARG}
+		OPT="-d"
+		TYPE="daily"
 		;;
-	w)	TIME="-w"
-		;;
-	v)	version
+	o)
+		FILENAME=${OPTARG}
 		exit 0
 		;;
-	esac
-done
-
-echo $OPT
-echo $TIME
-'''
-
-while [[ $# -gt 1 ]]; do
-	case "$1" in
-		-r|--random)
-			TYPE="random"
-			OPT="-r"
-			shift
-			;;
-		-d|--daily)
-			TYPE="daily"
-			TIME="-a"
-			shift
-			;;
-		-w|--weekly)
-			TYPE="weekly"
-			TIME="-e"
-			shift
-			;;
-		-f|--featured)
-			TYPE="featured"
-			OPT="-f"
-			shift
-			;;
-		-c|--colors)
-			SET_COMMAND="wal -i"
-			shift
-			;;
-		-q|--search)
-			SEARCH="$2"
-			shift 2
-			;;
-		-v|--version)
-			version
-			exit 0
-			;;
-		-h|--help)
-			usage
-			exit 0
-			;;
+	v)
+		version
+		exit 0
+		;;
+	c)
+		SET_COMMAND="wal -i"
+		;;
+	q)
+		SEARCH="$2"
+		;;
 	esac
 done
 
@@ -135,7 +100,7 @@ fi
 # Create dir
 if [ ! -d ${DIR} ]; then
 	echo "Creating directory..."
-	mkdir ${DIR}
+	mkdir -p ${DIR}
 fi
 
 # Clear directory
@@ -149,6 +114,6 @@ unsplash-wallpaper -d ${DIR} ${OPT} ${SEARCH+-q} "${SEARCH}" #&> /dev/null
 # Set it
 echo "Updating wallpaper..."
 WP_PATH=`ls -t ${DIR}/wallpaper*`
-sh ./ksetwallpaper.sh ${WP_PATH}
+sh ${HOME}/.scripts/walksplash/ksetwallpaper.sh ${WP_PATH}
 
 echo "Enjoy!"

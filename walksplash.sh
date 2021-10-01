@@ -41,8 +41,9 @@ version() {
 	echo "`basename $0` v${VERSION}"
 }
 
-
 DIR="${HOME}/Pictures/Autowallpaper"
+WIDTH=2880
+HEIGHT=1800
 
 getopt --test > /dev/null
 if [[ $? -ne 4 ]]; then
@@ -52,7 +53,7 @@ fi
 
 while getopts "rdfo:cqvh?" opt; do
 	case "$opt" in
-	h|\?)
+	\?)
 		usage
 		exit 0
 		;;
@@ -73,6 +74,12 @@ while getopts "rdfo:cqvh?" opt; do
 		OPT="-o"
 		TYPE="collection"
 		SEARCH="${OPTARG}"
+		;;
+	w)
+		WIDTH="${OPTARG}"
+		;;
+	h)
+		HEIGHT="${OPTARG}"
 		;;
 	v)
 		version
@@ -109,7 +116,7 @@ fi
 
 # Get wallpaper
 echo "Getting ${TYPE} wallpaper..."
-WP_PATH=$(unsplash-wallpaper -d ${DIR} ${OPT} "${SEARCH}" | grep "Image saved to" | cut -d' ' -f 5 | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g")
+WP_PATH=$(unsplash-wallpaper -d ${DIR} -w "${WIDTH}" -h "${HEIGHT}" ${OPT} "${SEARCH}" | grep "Image saved to" | cut -d' ' -f 5 | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g")
 
 if [ -z "${WP_PATH}" ]; then
 	echo "Somehow we couldn't get the wallpaper path."

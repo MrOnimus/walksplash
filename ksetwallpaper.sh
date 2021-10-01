@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 
+if [ ! -f "$1" ]; then
+	echo "This file does not exist."
+	exit 1
+fi
+
 full_image_path=$(realpath "$1")
-ext=$(file -b --mime-type "$full_image_path")
+image_extension=$(file -b --mime-type "$full_image_path")
 
 if [ -z "$2" ]; then
     # Identify filetype and make changes
-    case $(echo $ext | cut -d'/' -f2) in
+    case $(echo "${image_extension}" | cut -d'/' -f2) in
         "mp4"|"webm") type='VideoWallpaper' ; write='VideoWallpaperBackgroundVideo';;
         "png"|"jpeg") type='org.kde.image' ; write='Image' ;;
         "gif"|"webp") type='GifWallpaper' ; write="GifWallpaperBackgroundGif" ;;
@@ -29,4 +34,4 @@ wallpaper_set_script="var allDesktops = desktops();
 qdbus org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript "${wallpaper_set_script}"
 
 # Optional, change lockscreen if you want
-# kwriteconfig5 --file kscreenlockerrc --group Greeter --group Wallpaper --group org.kde.image --group General --key Image "file://$full_image_path"
+kwriteconfig5 --file kscreenlockerrc --group Greeter --group Wallpaper --group org.kde.image --group General --key Image "file://$full_image_path"

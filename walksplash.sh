@@ -27,10 +27,10 @@ Options:
 		-d, daily
 		-w, weekly
 		-f, featured
+		-o, collection
 		-q,--search	 Get a photo from a search query
 	* colorscheme options:
 		-c,--colors	 Set colorscheme with wal
-		-o, specify output file name
 		-v, show version
 		-h/-?, show this help message
 Example:
@@ -44,13 +44,11 @@ version() {
 
 DIR="${HOME}/Pictures/Autowallpaper"
 
-'''
 getopt --test > /dev/null
 if [[ $? -ne 4 ]]; then
 	echo "I’m sorry, `getopt --test` failed in this environment."
 	exit 1
 fi
-'''
 
 while getopts "rdfo:cqvh?" opt; do
 	case "$opt" in
@@ -72,8 +70,9 @@ while getopts "rdfo:cqvh?" opt; do
 		TYPE="daily"
 		;;
 	o)
-		FILENAME=${OPTARG}
-		exit 0
+		OPT="-o"
+		TYPE="collection"
+		SEARCH="${OPTARG}"
 		;;
 	v)
 		version
@@ -104,16 +103,24 @@ if [ ! -d ${DIR} ]; then
 fi
 
 # Clear directory
-echo "Cleaning directory content..."
-rm ${DIR}/*
+# In some cases you don't want to clean the directory, i.e. if it's a wallpaper directory
+#echo "Cleaning directory content..."
+#rm ${DIR}/*
 
 # Get wallpaper
 echo "Getting ${TYPE} wallpaper..."
-unsplash-wallpaper -d ${DIR} ${OPT} ${SEARCH+-q} "${SEARCH}" #&> /dev/null
+WP_PATH=$(unsplash-wallpaper -d ${DIR} ${OPT} "${SEARCH}" | grep "Image saved to" | cut -d' ' -f 5 | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2})?)?[mGK]//g")
+
+if [ -z "${WP_PATH}" ]; then
+	echo "Somehow we couldn't get the wallpaper path."
+	exit 1
+elif [[ "${WP_PATH}" =~ *"wallpaper-source-404"* ]]; then
+	echo "We couldn't find anything like that on Unsplash."
+	exit 1
+fi
 
 # Set it
 echo "Updating wallpaper..."
-WP_PATH=`ls -t ${DIR}/wallpaper*`
-sh ${HOME}/.scripts/walksplash/ksetwallpaper.sh ${WP_PATH}
+source "$(dirname -- $0)/ksetwallpaper.sh" "${WP_PATH}"
 
 echo "Enjoy!"
